@@ -1,0 +1,35 @@
+name: CI/CD Pipeline - Final Project
+
+on:
+  push:
+    branches: [ "main" ] 
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 'Checkout Github Action'
+      uses: actions/checkout@v3
+
+    - name: 'Login via Azure CLI'
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: 'Login to ACR'
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+
+    - name: 'Build and Push Docker Image'
+      run: |
+        docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/proje3-app-final:latest
+        docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/proje3-app-final:latest
+
+    - name: 'Deploy to Azure Web App'
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'proje3-app-20070006062'
+        images: '${{ secrets.REGISTRY_LOGIN_SERVER }}/proje3-app-final:latest'
